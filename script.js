@@ -4,32 +4,35 @@ document.getElementById("submit-btn").addEventListener("click", submitQuiz);
 
 function renderQuiz() {
     const container = document.getElementById("quiz-container");
+    const title = document.createElement("h2");
+    title.textContent = quiz.title;
+    container.appendChild(title);
+
     quizData.forEach((q, index) => {
         const questionElem = document.createElement("div");
         questionElem.className = "question";
         questionElem.setAttribute("data-type", q.type);
         questionElem.innerHTML = `<p>${q.question}</p>`;
-        
+
         if (q.type === "single-answer" || q.type === "multiple-answer") {
             q.options.forEach((option) => {
                 const inputType = q.type === "single-answer" ? "radio" : "checkbox";
                 questionElem.innerHTML += `
                     <label>
-                        <input type="${inputType}" name="question${index}" value="${option}" data-correct="${q.answer.includes(option)}">
+                        <input type="${inputType}" name="question${index}" value="${option}" data-correct="${q.type === 'multiple-answer' ? q.answers.includes(option) : q.answer === option}">
                         ${option}
                     </label>
                 `;
             });
         } else if (q.type === "free-form") {
             questionElem.innerHTML += `
-                <input type="text" name="question${index}" data-correct="${q.answer}">
+                <input type="text" name="question${index}" data-correct="${q.answers}">
             `;
         }
 
         container.appendChild(questionElem);
     });
 }
-
 function submitQuiz() {
     let score = 0;
     let total = 0;
