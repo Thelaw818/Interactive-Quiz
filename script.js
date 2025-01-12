@@ -1,91 +1,80 @@
-// Ensure the DOM is fully loaded before running the script
 document.addEventListener('DOMContentLoaded', function () {
-  // Retrieve the quiz container and render the quiz
   const quizContainer = document.getElementById('quiz-container');
   renderQuiz(quizData, quizContainer);
 
-  // Attach the event listener to the Submit button
   const submitBtn = document.getElementById('submit-btn');
   submitBtn.addEventListener('click', submitQuiz);
 });
 
-/**
- * Renders the quiz questions and options within the given container.
- * @param {Array} quizData - The data for the quiz including questions and answers.
- * @param {HTMLElement} container - The DOM element where the quiz will be rendered.
- */
 function renderQuiz(quizData, container) {
-  quizData.forEach((questionData, index) => {
-    const questionElement = document.createElement('div');
-    questionElement.className = 'question';
-    questionElement.innerHTML = `<p>${questionData.question}</p>`;
-
-    if (questionData.type === 'single-answer' || questionData.type === 'multiple-answer') {
-      questionData.options.forEach(option => {
-        const inputType = questionData.type === 'single-answer' ? 'radio' : 'checkbox';
-        questionElement.innerHTML += `
-          <label>
-            <input type="${inputType}" name="question${index}" value="${option}" data-correct="${questionData.answer && questionData.answer.includes(option)}">
-            ${option}
-          </label>`;
+  const quizList = document.createElement('ol');
+  quizData.questions.forEach((q, index) => {
+    const questionItem = document.createElement('li');
+    questionItem.className = q.type + ' question';
+    questionItem.innerHTML = `<p>${q.question}</p>`;
+    if (q.type === 'single-answer' || q.type === 'multiple-answer') {
+      q.options.forEach((option) => {
+        const inputType = q.type === 'single-answer' ? 'radio' : 'checkbox';
+        const input = `<label>
+                         <input type="${inputType}" name="question${index}" value="${option}" data-correct="${q.answer === option}">
+                         ${option}
+                       </label>`;
+        questionItem.innerHTML += input;
       });
-    } else if (questionData.type === 'free-form') {
-      questionElement.innerHTML += `<input type="text" name="question${index}" data-correct="${questionData.answers}">`;
+    } else if (q.type === 'free-form') {
+      questionItem.innerHTML += `<input type="text" name="question${index}" data-correct-answers="${q.answers.join(',')}">`;
     }
-
-    container.appendChild(questionElement);
+    quizList.appendChild(questionItem);
   });
+  container.appendChild(quizList);
 }
 
-/**
- * Submits the quiz, checks all answers, calculates the score, and displays it.
- */
+function areAllQuestionsAnswered() {
+  const questions = document.querySelectorAll('.question');
+  for (let question of questions) {
+    const inputs = question.querySelectorAll('input');
+    if (!Array.from(inputs).some(input => input.checked || input.value)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function submitQuiz() {
   if (!areAllQuestionsAnswered()) {
-    alert('Please answer all questions before submitting the quiz.');
+    alert('Please answer all questions!');
     return;
   }
 
-  let score = 0;
   const questions = document.querySelectorAll('.question');
+  let score = 0;
 
-  questions.forEach((question, index) => {
-    const inputs = question.querySelectorAll('input');
-    const type = quizData[index].type;
-
-    if (type === 'single-answer') {
-      const selected = question.querySelector('input[type="radio"]:checked');
-      if (selected && selected.getAttribute('data-correct') === 'true') score++;
-    } else if (type === 'multiple-answer') {
-      const correctAnswers = Array.from(inputs).filter(input => input.getAttribute('data-correct') === 'true');
-      const selectedAnswers = Array.from(inputs).filter(input => input.checked);
-
-      if (
-        correctAnswers.length === selectedAnswers.length &&
-        correctAnswers.every(answer => selectedAnswers.includes(answer))
-      ) {
-        score++;
-      }
-    } else if (type === 'free-form') {
-      const input = question.querySelector('input[type="text"]');
-      if (quizData[index].answers.includes(input.value.trim().toLowerCase())) score++;
+  questions.forEach((question) => {
+    if (question.classList.contains('single-answer')) {
+      score += isSingleAnswerCorrect(question) ? 1 : 0;
+    } else if (question.classList.contains('multiple-answer')) {
+      score += isMultipleAnswerCorrect(question) ? 1 : 0;
+    } else if (question.classList.contains('free-form')) {
+      score += isFreeFormAnswerCorrect(question) ? 1 : 0;
     }
   });
 
-  document.getElementById('score-display').textContent = `You scored ${score} out of ${questions.length}!`;
+  alert(`Your score: ${score}/${questions.length}`);
 }
 
-/**
- * Checks if all quiz questions have been answered.
- * @return {Boolean} True if all questions are answered, false otherwise.
- */
-function areAllQuestionsAnswered() {
-  const questions = document.querySelectorAll('.question');
-  for (const question of questions) {
-    const inputs = question.querySelectorAll('input');
-    if (Array.from(inputs).every(input => !input.checked && input.type !== 'text' && input.value.trim() === '')) {
-      return false; // A question is unanswered
-    }
-  }
-  return true; // All questions are answered
+function isSingleAnswerCorrect(question) {
+  const selected = question.querySelector('input:checked');
+  return selected && selected.dataset.correct === 'true';
+}
+
+function isMultipleAnswerCorrect(question) {
+  const selected = question.querySelectorAll('input:checked');
+  const correctAnswers = Array.from(question.querySelectorAll('input[data-correct="true"]'));
+  return selected.length === correctAnswers.length && Array.from(selected).every(input => input.dataset.correct === 'true');
+}
+
+function isFreeFormAnswerCorrect(question) {
+  const input = question.querySelector('input');
+  const correctAnswers = input.dataset.correctAnswers.split(',');
+  return correctAnswers.includes(input.value.trim().toLowerCase());
 }
