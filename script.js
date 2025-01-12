@@ -1,14 +1,17 @@
+// Ensure the DOM is fully loaded before running the script
 document.addEventListener('DOMContentLoaded', function () {
+  // Retrieve the quiz container and render the quiz
   const quizContainer = document.getElementById('quiz-container');
   renderQuiz(quizData, quizContainer);
 
+  // Attach the event listener to the Submit button
   const submitBtn = document.getElementById('submit-btn');
   submitBtn.addEventListener('click', submitQuiz);
 });
 
 /**
  * Renders the quiz questions and options within the given container.
- * @param {Object} quizData - The data for the quiz including questions and answers.
+ * @param {Array} quizData - The data for the quiz including questions and answers.
  * @param {HTMLElement} container - The DOM element where the quiz will be rendered.
  */
 function renderQuiz(quizData, container) {
