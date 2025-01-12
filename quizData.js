@@ -1,4 +1,6 @@
 const quizData = [
+  "title": "United States History Quiz",
+  "questions": [
   {
     "question": "Who was the first President of the United States?",
     "options": ["George Washington", "Thomas Jefferson", "Abraham Lincoln", "Benjamin Franklin"],
