@@ -6,6 +6,11 @@ document.addEventListener('DOMContentLoaded', function () {
   submitBtn.addEventListener('click', submitQuiz);
 });
 
+/**
+ * Renders the quiz questions and options within the given container.
+ * @param {Object} quizData - The data for the quiz including questions and answers.
+ * @param {HTMLElement} container - The DOM element where the quiz will be rendered.
+ */
 function renderQuiz(quizData, container) {
   quizData.forEach((questionData, index) => {
     const questionElement = document.createElement('div');
@@ -29,7 +34,15 @@ function renderQuiz(quizData, container) {
   });
 }
 
+/**
+ * Submits the quiz, checks all answers, calculates the score, and displays it.
+ */
 function submitQuiz() {
+  if (!areAllQuestionsAnswered()) {
+    alert('Please answer all questions before submitting the quiz.');
+    return;
+  }
+
   let score = 0;
   const questions = document.querySelectorAll('.question');
 
@@ -43,7 +56,13 @@ function submitQuiz() {
     } else if (type === 'multiple-answer') {
       const correctAnswers = Array.from(inputs).filter(input => input.getAttribute('data-correct') === 'true');
       const selectedAnswers = Array.from(inputs).filter(input => input.checked);
-      if (JSON.stringify(correctAnswers) === JSON.stringify(selectedAnswers)) score++;
+
+      if (
+        correctAnswers.length === selectedAnswers.length &&
+        correctAnswers.every(answer => selectedAnswers.includes(answer))
+      ) {
+        score++;
+      }
     } else if (type === 'free-form') {
       const input = question.querySelector('input[type="text"]');
       if (quizData[index].answers.includes(input.value.trim().toLowerCase())) score++;
@@ -51,4 +70,19 @@ function submitQuiz() {
   });
 
   document.getElementById('score-display').textContent = `You scored ${score} out of ${questions.length}!`;
+}
+
+/**
+ * Checks if all quiz questions have been answered.
+ * @return {Boolean} True if all questions are answered, false otherwise.
+ */
+function areAllQuestionsAnswered() {
+  const questions = document.querySelectorAll('.question');
+  for (const question of questions) {
+    const inputs = question.querySelectorAll('input');
+    if (Array.from(inputs).every(input => !input.checked && input.type !== 'text' && input.value.trim() === '')) {
+      return false; // A question is unanswered
+    }
+  }
+  return true; // All questions are answered
 }
